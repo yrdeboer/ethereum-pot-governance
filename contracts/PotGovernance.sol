@@ -36,7 +36,11 @@ contract PotGovernance {
   // Events //
   ////////////
   
-  event ProposalAdded(uint32 _proposalKey, string _description);
+  event ProposalAdded(uint32 _proposalKey);
+  event VoteCast(uint32 _proposalKey);
+  event ProposalApproved(uint32 _proposalKey);
+  event ProposalRejected(uint32 _proposalKey);
+  event ProposalCancelled(uint32 _proposalKey);
 
   ///////////////////////
   // F u n c t i o n s //
@@ -61,6 +65,12 @@ contract PotGovernance {
   // This is the function that receives pot deposits
   function () external payable {}
 
+
+  function getBalanceReservedWei () external view returns (uint256) {
+    return balanceReservedWei;
+  }
+
+  
   function getOwnerByKey(uint8 _ownerKey) external view returns (string memory, address) {
     require(_ownerKey >= 0 && _ownerKey <4);
     return (potOwners[_ownerKey].name, potOwners[_ownerKey].addr);
@@ -78,7 +88,8 @@ contract PotGovernance {
   }
 
   
-  function addProposal(address payable _recipientAddr, uint256 _valueWei,
+  function addProposal(address payable _recipientAddr,
+		       uint256 _valueWei,
 		       string calldata _description) external {
       
     // Require caller is pot owner
@@ -102,9 +113,10 @@ contract PotGovernance {
     proposal.recipientAddr = _recipientAddr;
     proposal.valueWei = _valueWei;
     proposal.description = _description;
-    proposalCount ++;      
+    
+    emit ProposalAdded(proposalCount);
 
-    emit ProposalAdded(proposalCount, _description);
+    proposalCount ++;
   }
 
         
@@ -117,7 +129,7 @@ contract PotGovernance {
 			   uint8) {             // proposal status
 
     // Require valid proposal
-    require(_proposalKey > 0 && _proposalKey <= proposalCount);
+    require(_proposalKey >= 0 && _proposalKey < proposalCount);
 
     Proposal memory p = proposals[_proposalKey];
 
@@ -129,13 +141,13 @@ contract PotGovernance {
 	    p.status);
   }
   
-  function closeProposal(uint32 _proposalKey) external {
+  function cancelProposal(uint32 _proposalKey) external {
 
     // Require caller is a pot owner
     callerIsOwnerGetKeyOrRevert();
       
     // Require valid proposal
-    require(_proposalKey > 0 && _proposalKey <= proposalCount);
+    require(_proposalKey >= 0 && _proposalKey < proposalCount);
 
     // Require proposal accepting votes
     require(proposals[_proposalKey].status == 0);
@@ -143,6 +155,8 @@ contract PotGovernance {
     // Update proposal and release reserved funds
     proposals[_proposalKey].status = 3;
     balanceReservedWei -= proposals[_proposalKey].valueWei;
+
+    emit ProposalCancelled(_proposalKey);
   }
   
   function castVote(uint32 _proposalKey, uint8 _vote) external {
@@ -151,7 +165,7 @@ contract PotGovernance {
     uint8 ownerKey = callerIsOwnerGetKeyOrRevert();
       
     // Require valid proposal
-    require(_proposalKey > 0 && _proposalKey <= proposalCount);
+    require(_proposalKey >= 0 && _proposalKey < proposalCount);
       
     // Require proposal accepting votes
     Proposal storage proposal = proposals[_proposalKey];
@@ -165,7 +179,9 @@ contract PotGovernance {
       
     // Update proposal
     proposal.ownerVoteStatus[ownerKey] = _vote;
-      
+
+    emit VoteCast(_proposalKey);
+    
     // Get updated score on proposal
     uint8 proCount;
     uint8 conCount;
@@ -180,12 +196,23 @@ contract PotGovernance {
 
     // Update proposal status
     if (proCount >= 3) {
+
       proposal.status = 1;
       balanceReservedWei -= proposal.valueWei;
       proposal.recipientAddr.transfer(proposal.valueWei);
+      emit ProposalApproved(_proposalKey);
+      
     } else if (conCount >= 3) {
+
       proposal.status = 2;
       balanceReservedWei -= proposal.valueWei;
+      emit ProposalRejected(_proposalKey);
+
+    } else if (proCount + conCount == 4) {
+
+      proposal.status = 3;
+      balanceReservedWei -= proposal.valueWei;
+      emit ProposalCancelled(_proposalKey);
     }
   }
 }
