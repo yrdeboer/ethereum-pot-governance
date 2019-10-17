@@ -2,16 +2,19 @@ pragma solidity ^0.5.12;
 
 contract PotGovernance {
 
+  // An owner is allowed to govern the pot.
   struct PotOwner {
     string name;
     address addr;
   }
   
+  // The owners are set at contract construction.
   PotOwner[4] public potOwners;
-  
+
+  // A proposal to transfer ether from the pot to some address.
   struct Proposal {
     uint8 ownerKeyProposer;
-    address recipientAddr;
+    address payable recipientAddr;
     uint256 valueWei;
     string description;
     
@@ -33,26 +36,36 @@ contract PotGovernance {
   // Events //
   ////////////
   
-  event ProposalAdded(uint32 _proposalKey, uint256 _description);
+  event ProposalAdded(uint32 _proposalKey, string _description);
 
   ///////////////////////
   // F u n c t i o n s //
   ///////////////////////
   
-  constructor (uint64[4] memory _ownerNames, address[4] memory _ownerAddresses) public {
-    for (uint8 i = 0; i < 4; i ++)
-      {
-        potOwners[i].name = _ownerNames[i];
-        potOwners[i].addr = _ownerAddresses[i];
-      }
+  constructor (string memory _name1, address _addr1,
+	       string memory _name2, address _addr2,
+	       string memory _name3, address _addr3,
+	       string memory _name4, address _addr4) public {
+
+    potOwners[0].name = _name1;
+    potOwners[0].addr = _addr1;
+    potOwners[1].name = _name2;
+    potOwners[1].addr = _addr2;
+    potOwners[2].name = _name3;
+    potOwners[2].addr = _addr3;
+    potOwners[3].name = _name4;
+    potOwners[3].addr = _addr4;
   }
 
+  
+  // This is the function that receives pot deposits
   function () external payable {}
 
-  function getOwnerByKey(uint8 _ownerKey) external view returns (uint64, address) {
+  function getOwnerByKey(uint8 _ownerKey) external view returns (string memory, address) {
     require(_ownerKey >= 0 && _ownerKey <4);
     return (potOwners[_ownerKey].name, potOwners[_ownerKey].addr);
   }
+
   
   function callerIsOwnerGetKeyOrRevert() public view returns (uint8) {
     for (uint8 i = 0; i < 4; i ++)
@@ -65,86 +78,116 @@ contract PotGovernance {
   }
 
   
-  function addProposal(address _recipientAddr, uint256 _valueWei, uint256 _description) external {
+  function addProposal(address payable _recipientAddr, uint256 _valueWei,
+		       string calldata _description) external {
       
     // Require caller is pot owner
     uint8 ownerKey = callerIsOwnerGetKeyOrRevert();
       
-    // Require available balance suffices and not overflows
+    // Require available balance suffices
     require(_valueWei >= 0);
     uint256 availableWei = address(this).balance - balanceReservedWei;
     require(availableWei >= _valueWei);
+
+    // Require absece of overflows
     require(availableWei - _valueWei <= availableWei);
-      
+    require(balanceReservedWei + _valueWei >= balanceReservedWei);
+    
     // Update reserved balance
     balanceReservedWei += _valueWei;
       
     // Create proposal
-    proposals[proposalCount].ownerKeyProposer = ownerKey;
-    proposals[proposalCount].recipientAddr = _recipientAddr;
-    proposals[proposalCount].valueWei = _valueWei;
-    proposals[proposalCount].description = _description;
+    Proposal storage proposal = proposals[proposalCount];
+    proposal.ownerKeyProposer = ownerKey;
+    proposal.recipientAddr = _recipientAddr;
+    proposal.valueWei = _valueWei;
+    proposal.description = _description;
     proposalCount ++;      
 
     emit ProposalAdded(proposalCount, _description);
   }
 
         
-  /* function getProposal(uint32 _proposalKey)  */
-  /*   external view returns ( */
-  /* 			   uint8,        // owner key */
-  /* 			   address,      // recipient address */
-  /* 			   uint256,      // value WEI */
-  /* 			   uint256,      // description utf-8 encoded */
-			   
+  function getProposal(uint32 _proposalKey)
+    external view returns (uint8,               // owner key
+  			   address,             // recipient address
+  			   uint256,             // value WEI
+  			   string memory,       // description
+			   uint8[4] memory,     // owner vote status
+			   uint8) {             // proposal status
 
-  /*   // Require valid proposal */
-  /*   require(_proposalKey > 0 && _proposalKey <= proposalCount); */
+    // Require valid proposal
+    require(_proposalKey > 0 && _proposalKey <= proposalCount);
 
-      
+    Proposal memory p = proposals[_proposalKey];
+
+    return (p.ownerKeyProposer,
+	    p.recipientAddr,
+	    p.valueWei,
+	    p.description,
+	    p.ownerVoteStatus,
+	    p.status);
+  }
   
-    function closeProposal(uint32 _proposalKey) external {
+  function closeProposal(uint32 _proposalKey) external {
 
-      // Require caller is a pot owner
-      callerIsOwnerGetKeyOrRevert();
+    // Require caller is a pot owner
+    callerIsOwnerGetKeyOrRevert();
       
-      // Require valid proposal
-      require(_proposalKey > 0 && _proposalKey <= proposalCount);
+    // Require valid proposal
+    require(_proposalKey > 0 && _proposalKey <= proposalCount);
 
-      // Require proposal accepting votes
-      require(proposals[_proposalKey].status == 0);
+    // Require proposal accepting votes
+    require(proposals[_proposalKey].status == 0);
 
-      // Update proposal and release reserved funds
-      proposals[_proposalKey].status = 3;
-      balanceReservedWei -= proposals[_proposalKey].valueWei;
-    }
+    // Update proposal and release reserved funds
+    proposals[_proposalKey].status = 3;
+    balanceReservedWei -= proposals[_proposalKey].valueWei;
+  }
   
-    function castVote(uint32 _proposalKey, uint8 _vote) external {
+  function castVote(uint32 _proposalKey, uint8 _vote) external {
 
-      // Require caller is a pot owner
-      uint8 ownerKey = callerIsOwnerGetKeyOrRevert();
+    // Require caller is a pot owner
+    uint8 ownerKey = callerIsOwnerGetKeyOrRevert();
       
-      // Require valid proposal
-      require(_proposalKey > 0 && _proposalKey <= proposalCount);
+    // Require valid proposal
+    require(_proposalKey > 0 && _proposalKey <= proposalCount);
       
-      // Require proposal accepting votes
-      require(proposals[_proposalKey].status == 0);
+    // Require proposal accepting votes
+    Proposal storage proposal = proposals[_proposalKey];
+    require(proposal.status == 0);
       
-      // Require caller has not voted yet
-      require(proposals[_proposalKey].ownerVoteStatus[ownerKey] == 0);
+    // Require caller has not voted yet
+    require(proposal.ownerVoteStatus[ownerKey] == 0);
       
-      // Require vote to be valid
-      require(_vote == 1 || _vote == 2);
+    // Require vote to be valid
+    require(_vote == 1 || _vote == 2);
       
-      // Update proposal
-      proposals[_proposalKey].ownerVoteStatus[ownerKey] = _vote;
+    // Update proposal
+    proposal.ownerVoteStatus[ownerKey] = _vote;
       
-      // Update proposal status
-      for (uint32 i = 0; i < proposalCount; i ++) {
-          
+    // Get updated score on proposal
+    uint8 proCount;
+    uint8 conCount;
+    for (uint8 i = 0; i < 4; i ++) {
+      uint8 vote = proposal.ownerVoteStatus[i];
+      if (vote == 1) {
+	proCount += 1;
+      } else if (vote == 2) {
+	conCount += 1;
       }
     }
 
+    // Update proposal status
+    if (proCount >= 3) {
+      proposal.status = 1;
+      balanceReservedWei -= proposal.valueWei;
+      proposal.recipientAddr.transfer(proposal.valueWei);
+    } else if (conCount >= 3) {
+      proposal.status = 2;
+      balanceReservedWei -= proposal.valueWei;
+    }
   }
+}
 
-  // [10, 20, 30, 40], ["0xCA35b7d915458EF540aDe6068dFe2F44E8fa733c", "0x14723A09ACff6D2A60DcdF7aA4AFf308FDDC160C", "0x4B0897b0513fdC7C541B6d9D7E929C4e5364D2dB", "0x583031D1113aD414F02576BD6afaBfb302140225"]
+// [10, 20, 30, 40], ["0xCA35b7d915458EF540aDe6068dFe2F44E8fa733c", "0x14723A09ACff6D2A60DcdF7aA4AFf308FDDC160C", "0x4B0897b0513fdC7C541B6d9D7E929C4e5364D2dB", "0x583031D1113aD414F02576BD6afaBfb302140225"]
