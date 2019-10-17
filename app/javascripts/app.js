@@ -14,12 +14,10 @@ import potGovernanceArtefact from '../../build/contracts/PotGovernance.json';
 var potGovernanceContract = contract(potGovernanceArtefact);
 
 import {
-    nameStrToHexStr,
-    hexStrToNameStr,
-    getVoterAccounts,
-    getRandomString,
-    createVoterListElements,
-    getURLParam } from "../javascripts/utils.js";
+    statusToString,
+    voteToString,
+    createRowNode
+} from "../javascripts/utils.js";
 
 var potGovernance = null;
 var contractBalanceWei = null;
@@ -121,12 +119,12 @@ window.App = {
 	    var p = await potGovernance.getProposal(pKey, {"from": userAccount});
 
 	    proposalsDict[pKey] = {
-		"ownerKey": parseInt(p[0]),
+		"ownerKey": parseInt(p[0].toNumber()),
 		"recipientAddress": p[1],
-		"valueWei": p[2],
+		"valueWei": new BigNumber(p[2]),
 		"description": p[3],
 		"ownerVotes": p[4],
-		"status": p[5]
+		"status": parseInt(p[5].toNumber())
 	    };
 
 	}
@@ -188,24 +186,110 @@ window.App = {
 
 	    // Add row
 	    var tr = document.createElement("tr");
+	    var trId = "proposalRow" + pKey.toString(10);
+	    tr.setAttribute("id", trId) ;
+	    var command = "App.expandProposalRow('" + trId + "', ";
+	    command += pKey.toString(10) + ");return false;";
+	    tr.setAttribute("onclick", command);
 
-	    // Add owner name
-	    var tdAddr = document.createElement("td");
-	    tdAddr.innerHTML = ownersDict[proposalsDict[pKey]["ownerKey"]]["name"];
-	    tr.appendChild(tdAddr);
-
+	    console.log("pKey=" + pKey);
+	    console.log("trId=" + trId);
+	    console.log("command=" + command);
+	    
 	    // Add descritpion
 	    var tdDescription = document.createElement("td");
 	    tdDescription.innerHTML = proposalsDict[pKey]["description"];
 	    tr.appendChild(tdDescription);
 
+	    // Add value
+	    var tdValue = document.createElement("td");
+	    var valueETH = parseFloat(proposalsDict[pKey]["valueWei"].dividedBy(
+		1e18).toFixed(10));
+	    tdValue.innerHTML = valueETH;
+	    tr.appendChild(tdValue);
+
+	    // Add status
+	    var tdStatus = document.createElement("td");
+	    tdStatus.innerHTML = statusToString(proposalsDict[pKey]["status"]);
+	    tr.appendChild(tdStatus);
 	    
 	    // Finally add row to table body
 	    tableNode.appendChild(tr);
 	}
-	
     },
-    
+
+    expandProposalRow: function (trId, pKey) {
+
+	const detailViewID = "detailView";
+	
+	// First delete old one, if any
+	var old = document.getElementById(detailViewID);
+
+	// Get clicked row node
+	var tr = document.getElementById(trId);
+
+	// Remove old, and if clicked row is parent of
+	// old expanded view, then just collapse
+	if (old != null && tr.nextSibling == old) {
+
+	    // Just collapse, nothing more
+	    old.remove();
+	    
+	}  else {
+
+	    if (old != null) {
+		old.remove();
+	    }
+
+	    // Create detail view table
+	    var tableNode = document.createElement("table");
+	    tableNode.setAttribute("class", "table");
+
+	    tableNode.appendChild(
+		createRowNode(
+		    ["Owner:",
+		     ownersDict[proposalsDict[pKey]["ownerKey"]]["name"],
+		     ""]));
+	    tableNode.appendChild(
+		createRowNode(
+		    ["Recipient address:",
+		     proposalsDict[pKey]["recipientAddress"],
+		     ""]));
+	    tableNode.appendChild(
+		createRowNode(
+		    ["Vote history:",
+		     "",
+		     ""]));
+
+	    for (var oKey = 0; oKey < 4; oKey ++) {
+
+		var ownerVote = voteToString(
+		    parseInt(proposalsDict[pKey]["ownerVotes"][oKey].toNumber()));
+		
+		tableNode.appendChild(
+		    createRowNode(
+			["",
+			 ownersDict[oKey]["name"] + ":",
+			 ownerVote]));
+		
+	    }
+
+	    // Put the table in a panel body
+	    var panelBody = document.createElement("div");
+	    panelBody.setAttribute("class", "panel-body");
+	    panelBody.appendChild(tableNode);
+
+	    panelBody.appendChild(window.App.createButtonDiv(pKey));
+	    
+	    var panel = document.createElement("div");
+	    panel.setAttribute("id", detailViewID);
+	    panel.setAttribute("class", "panel panel-success");
+	    panel.appendChild(panelBody);
+
+	    tr.parentNode.insertBefore(panel, tr.nextSibling);
+	}	
+    },
+	
     addProposal: async function () {
 	var description = document.getElementById("inputDescription").value;
 	var valueETH = document.getElementById("inputValueETH").value;
@@ -234,6 +318,71 @@ window.App = {
 	}
     },
 
+
+    createButtonDiv: function (pKey) {
+
+	// Function returns a created div of type row,
+	// with buttons for the user (Approve, Reject, Cancel).
+
+	var div = document.createElement("div");
+	div.setAttribute("class", "row");
+
+	var oKey = window.App.getUserOwnerKey();
+	if (oKey != null) {
+	    div.appendChild(window.App.createCancelButton(pKey));
+
+	    if (window.App.userCanVote(pKey, oKey)) {
+		div.appendChild(window.App.createApproveButton(pKey));
+		div.appendChild(window.App.createRejectButton(pKey));
+	    }
+	}
+
+	return div;
+    },
+
+    getUserOwnerKey: function () {
+	for (var i = 0; i < 4; i ++) {
+	    if (ownersDict[i]["address"].toLowerCase() == userAccount.toLowerCase()) {
+		return i;
+	    }
+	}
+	return null;
+    },
+
+    userCanVote: function (pKey, oKey) {
+
+	if (proposalsDict[pKey]["ownerVotes"][oKey] == 0) {
+	    return true;
+	}
+	return false;
+    },
+    
+    createCancelButton: function (pKey) {
+
+	var btn = document.createElement("button");
+	btn.setAttribute("class", "btn btn-default");
+	btn.setAttribute("onclick", "App.cancelProposal(" + pKey + ");return false;");
+	btn.innerHTML = "Cancel proposal";
+	return btn;
+    },
+    
+    createApproveButton: function (pKey) {
+
+	var btn = document.createElement("button");
+	btn.setAttribute("class", "btn btn-default");
+	btn.setAttribute("onclick", "App.approveProposal(" + pKey + ");return false;");
+	btn.innerHTML = "Approve proposal";
+	return btn;
+    },
+    
+    createRejectButton: function (pKey) {
+
+	var btn = document.createElement("button");
+	btn.setAttribute("class", "btn btn-default");
+	btn.setAttribute("onclick", "App.rejectProposal(" + pKey + ");return false;");
+	btn.innerHTML = "Reject proposal";
+	return btn;
+    },
     
     // mentionOtherNetAvailability: async function () {
 
