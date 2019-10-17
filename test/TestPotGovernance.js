@@ -57,9 +57,14 @@ contract("Test contract deploys properly", function(accounts) {
 	    {"from": ownerAddrs[prop1OwnerKey]});
 	
 	assert.equal(receipt.logs[0].event, "ProposalAdded");
-
     });
 
+    it("should return proper proposal count", async function () {
+
+	var cnt = await potGovernance.getProposalCount.call({"from": someUserAccount});
+	assert(BigNumber(cnt).isEqualTo(BigNumber(1)));
+    });
+    
     it("should return proper owners by key", async function () {
 
 	for (var i = 0; i < ownerNames.length; i ++) {

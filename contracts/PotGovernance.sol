@@ -70,6 +70,11 @@ contract PotGovernance {
     return balanceReservedWei;
   }
 
+
+  function getProposalCount () external view returns (uint32) {
+    return proposalCount;
+  }
+  
   
   function getOwnerByKey(uint8 _ownerKey) external view returns (string memory, address) {
     require(_ownerKey >= 0 && _ownerKey <4);
@@ -216,5 +221,3 @@ contract PotGovernance {
     }
   }
 }
-
-// [10, 20, 30, 40], ["0xCA35b7d915458EF540aDe6068dFe2F44E8fa733c", "0x14723A09ACff6D2A60DcdF7aA4AFf308FDDC160C", "0x4B0897b0513fdC7C541B6d9D7E929C4e5364D2dB", "0x583031D1113aD414F02576BD6afaBfb302140225"]
