@@ -19,7 +19,7 @@ export function statusToString(statusInt) {
     } else if (statusInt == 2) {
 	statusStr = "Rejected";	
     } else if (statusInt == 3) {
-	statusStr = "Rejected";
+	statusStr = "Cancelled";
     }
 
     return statusStr;
