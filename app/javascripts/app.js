@@ -166,6 +166,7 @@ window.App = {
 
 	    if (ownersDict[ownerKey]["address"].toLowerCase() == userAccount.toLowerCase()) {
 		txt = "You";
+		tr.setAttribute("bgcolor", "#ccffcc");
 	    }
 	    tdYou.innerHTML = txt;
 	    tr.appendChild(tdYou);
@@ -297,7 +298,7 @@ window.App = {
 
 	var oKey = window.App.getUserOwnerKey();
 	if (oKey == null) {
-	    alert("Your connected ETH account is not a governing account");
+	    alert("Your connected Ethereum account is not a governing account");
 	} else if (contractBalanceWei.minus(contractReservedWei).isLessThanOrEqualTo(valueWei)) {
 	    alert("Insufficient available balance on contract");
 	} else {
