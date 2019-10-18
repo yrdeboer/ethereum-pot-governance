@@ -55001,6 +55001,7 @@ window.App = {
     
     initIndex: async function () {
 
+	await window.App.displayNetworkName();
 	await window.App.setContractBalances();
 	await window.App.setOwnerDict();
 	await window.App.setProposalsDict();
@@ -55010,6 +55011,24 @@ window.App = {
 
     },
 
+    displayNetworkName: async function () {
+
+	var netId = await window.web3.eth.net.getId();
+
+	var networkName = "Unknown network";
+	if (netId == 1) {
+	    networkName = "Connected to: Main net";
+	} else if (netId == 4) {
+	    networkName = "Connected to: Rinkeby test net";
+	} else {
+	    networkName = "Connected to network with id: " + netId.toString(10);
+	}
+	
+	var node = document.getElementById("networkName");	
+	node.innerHTML = networkName;
+    },
+
+    
     setContractBalances: async function () {
 
 	contractBalanceWei = new __WEBPACK_IMPORTED_MODULE_5_bignumber_js___default.a(await web3.eth.getBalance(potGovernance.address));
