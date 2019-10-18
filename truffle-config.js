@@ -18,32 +18,35 @@
  *
  */
 
-const BIP39 = require('bip39');
-var HDKey = require('ethereumjs-wallet/hdkey');
+// const BIP39 = require('bip39');
+// var HDKey = require('ethereumjs-wallet/hdkey');
 const HDWalletProvider = require('truffle-hdwallet-provider');
-const readline = require('readline-sync');
+// const readline = require('readline-sync');
 const fs = require('fs');
 
 
-function mnemonicToAddress0 (mnemonic) {
+// function mnemonicToAddress0 (mnemonic) {
 
-    if (!BIP39.validateMnemonic(mnemonic)) {
-	throw("Invalid mnemonic: " + mnemonic);
-    }
+//     if (!BIP39.validateMnemonic(mnemonic)) {
+// 	throw("Invalid mnemonic: " + mnemonic);
+//     }
 
-    const seed = BIP39.mnemonicToSeedSync(mnemonic);
-    const hdKey = HDKey.fromMasterSeed(seed);
+//     const seed = BIP39.mnemonicToSeedSync(mnemonic);
+//     const hdKey = HDKey.fromMasterSeed(seed);
 
-    var wallet0 = hdKey.derivePath("m/44'/60'/0'/0/0").getWallet();
-    var addr = wallet0.getAddress();
-    return "0x" + addr.toString("hex");
-}
+//     var wallet0 = hdKey.derivePath("m/44'/60'/0'/0/0").getWallet();
+//     var addr = wallet0.getAddress();
+//     return "0x" + addr.toString("hex");
+// }
 
 
 // const mnemonic = readline.question("mnemonic: ");
-const mnemonic = "angry blood dose rich sail sibling asset vacuum sunny dentist clog wire";
+// const mnemonicDev = "echo afford skirt path position stumble used canvas vocal cover fetch immune";
+const mnemonicDev = "similar thrive hungry curious parrot health sing deliver rack tape mimic sing";
+// const fromAddrDev = mnemonicToAddress0(mnemonicDev);
 
-const fromAddr = mnemonicToAddress0(mnemonic);
+// const mnemonicMain = fs.readFileSync("mnemonicMain.txt").toString().trim();
+// const infuraMain = fs.readFileSync("infuraEndpointMainNet.txt").toString().trim();
 
 
 module.exports = {
@@ -68,7 +71,7 @@ module.exports = {
 	    host: "127.0.0.1",     // Localhost (default: none)
 	    port: 8545,            // Standard Ethereum port (default: none)
 	    network_id: "*",       // Any network (default: none)
-	    from: "0x85a2EeD7a386aDbF4359cDf82F60968087438e43"
+	    // from: fromAddrDev
 	},
 
 	// Another network with more advanced options...
@@ -85,8 +88,8 @@ module.exports = {
 	// NB: It's important to wrap the provider as a function.
 	rinkeby: {
 	    provider: () => new HDWalletProvider(
-		mnemonic,
-		fs.readFileSync("infuraEndpointRinkeby.txt").toString().trim()
+		fs.readFileSync("/ntfs/projects/ethereum-pot-governance/mnemonicRinkeby.txt").toString().trim(),
+		fs.readFileSync("/ntfs/projects/ethereum-pot-governance/infuraEndpointRinkeby.txt").toString().trim(),
 	    ),
 	    network_id: 4,       // Rinkeby
 	    gas: 6000000,       //
@@ -94,22 +97,22 @@ module.exports = {
 	    confirmations: 2,    // # of confs to wait between deployments. (default: 0)
 	    timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
 	    skipDryRun: true,    // Skip dry run before migrations? (default: false for public nets )
-	    from: fromAddr
+	    // from: fromAddrRinkeby
 	},
 
-	mainnet: {
-	    provider: () => new HDWalletProvider(
-		mnemonic,
-		fs.readFileSync("infuraEndpointMainNet.txt").toString().trim()
-	    ),
-	    network_id: 1,       // Main 
-	    gas: 2000000,       //
-	    gasPrice: 20000000000,
-	    confirmations: 2,    // # of confs to wait between deployments. (default: 0)
-	    timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
-	    skipDryRun: true,    // Skip dry run before migrations? (default: false for public nets )
-	    from: fromAddr
-	},
+	// mainnet: {
+	//     provider: () => new HDWalletProvider(
+	// 	mnemonicMain,
+	// 	infuraMain
+	//     ),
+	//     network_id: 1,       // Main 
+	//     gas: 2000000,       //
+	//     gasPrice: 20000000000,
+	//     confirmations: 2,    // # of confs to wait between deployments. (default: 0)
+	//     timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
+	//     skipDryRun: true,    // Skip dry run before migrations? (default: false for public nets )
+	//     // from: defaults to first from mnemonic
+	// },
 
     },
 

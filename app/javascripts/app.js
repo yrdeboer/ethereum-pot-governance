@@ -64,6 +64,7 @@ window.App = {
     
     initIndex: async function () {
 
+	await window.App.displayNetworkName();
 	await window.App.setContractBalances();
 	await window.App.setOwnerDict();
 	await window.App.setProposalsDict();
@@ -73,6 +74,24 @@ window.App = {
 
     },
 
+    displayNetworkName: async function () {
+
+	var netId = await window.web3.eth.net.getId();
+
+	var networkName = "Unknown network";
+	if (netId == 1) {
+	    networkName = "Connected to: Main net";
+	} else if (netId == 4) {
+	    networkName = "Connected to: Rinkeby test net";
+	} else {
+	    networkName = "Connected to network with id: " + netId.toString(10);
+	}
+	
+	var node = document.getElementById("networkName");	
+	node.innerHTML = networkName;
+    },
+
+    
     setContractBalances: async function () {
 
 	contractBalanceWei = new BigNumber(await web3.eth.getBalance(potGovernance.address));
@@ -276,7 +295,10 @@ window.App = {
 	var valueWeiStr = valueWei.toString(10);
 	var addr = document.getElementById("inputAddress").value;
 
-	if (contractBalanceWei.minus(contractReservedWei).isLessThanOrEqualTo(valueWei)) {
+	var oKey = window.App.getUserOwnerKey();
+	if (oKey == null) {
+	    alert("Your connected ETH account is not a governing account");
+	} else if (contractBalanceWei.minus(contractReservedWei).isLessThanOrEqualTo(valueWei)) {
 	    alert("Insufficient available balance on contract");
 	} else {
 	    
