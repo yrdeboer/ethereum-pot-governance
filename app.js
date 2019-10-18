@@ -55103,6 +55103,7 @@ window.App = {
 
 	    if (ownersDict[ownerKey]["address"].toLowerCase() == userAccount.toLowerCase()) {
 		txt = "You";
+		tr.setAttribute("bgcolor", "#ccffcc");
 	    }
 	    tdYou.innerHTML = txt;
 	    tr.appendChild(tdYou);
@@ -55234,7 +55235,7 @@ window.App = {
 
 	var oKey = window.App.getUserOwnerKey();
 	if (oKey == null) {
-	    alert("Your connected ETH account is not a governing account");
+	    alert("Your connected Ethereum account is not a governing account");
 	} else if (contractBalanceWei.minus(contractReservedWei).isLessThanOrEqualTo(valueWei)) {
 	    alert("Insufficient available balance on contract");
 	} else {
@@ -104451,9 +104452,9 @@ function voteToString(voteInt) {
     if (voteInt == 0) {
 	ownerVote = "Not voted";
     } else if (voteInt == 1) {
-	ownerVote = "Approved";
+	ownerVote = "<font color='green'><b>Approved</b></font>";
     } else if (voteInt == 2) {
-	ownerVote = "Rejected";
+	ownerVote = "<font color='red'><b>Rejected</b></font>";
     }
     
     return ownerVote;
