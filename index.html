@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+    <head>
+	<title>GSMG Pot Governance</title>
+	<meta
+	    name="viewport"
+	    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+	<script src="./app.js"></script>
+    </head>
+    <body>
+
+	<div class="container-fluid">
+
+	    <div class="row">
+
+		<div class="panel panel-primary">
+		    <div class="panel-heading">
+			<h3>GSMG Pot Governance 
+			    <span class="pull-right" id="otherNetMention"></span>
+			</h3>
+		    </div>
+		</div>
+
+		<div class="col-lg-6">
+
+		    <div class="panel panel-info">
+			<div class="panel-heading">
+			    <div></div>
+			    <h3>Pot balances in ETH</h3>
+			</div>
+			
+			<div class="panel-body">
+			    <table class="table">
+				<thead>
+				    <th scope="col">Total</th>
+				    <th scope="col">Reserved</th>
+				</thead>
+				<tbody id="balances">
+				    <tr>
+					<td><span id="totalContractBalanceETH"></span></td>
+					<td><span id="reservedContractBalanceETH"></span></td>
+				    </tr>
+				</tbody>
+			    </table>
+			</div>
+
+		    </div> <!-- End panel info with balance -->
+
+		    <div class="panel panel-info">
+			<div class="panel-heading">
+			    <div></div>
+			    <h3>Governours</h3>
+			</div>
+			
+			<div class="panel-body">
+			    <table class="table">
+				<thead>
+				    <th scope="col">Name</th>
+				    <th scope="col">Address</th>
+				    <th scope="col">Who</th>
+				</thead>
+
+				<tbody id="ownersTableBody">
+				</tbody>
+
+			    </table>
+			</div>
+		    </div>  <!-- End owner table -->
+
+
+		</div>  <!-- col 6 -->
+		
+
+		<div class="col-lg-6">	    
+
+		    <div class="panel panel-success">
+			<div class="panel-heading"><h3>New payment proposal</h3></div>
+			<div class="panel-body">
+
+			    <form>
+
+				<div class="form-group">
+				    <label for="inputDescription">
+					Description
+				    </label>
+				    <input
+					type="text"
+					      name="inputDescription"
+					      class="form-control"
+					      id="inputDescription"
+					      placeholder="Reimbursement for user 9021">
+				</div>
+
+				<div class="form-group">
+				    <label for="inputValueETH">
+					Value in ETH
+				    </label>
+				    <input
+					type="number"
+					      name="inputValueETH"
+					      class="form-control"
+					      id="inputValueETH"
+					      placeholder="0.353">
+				</div>
+
+				<div class="form-group">
+				    <label for="inputAddress">
+					Recipient address
+				    </label>
+				    <input
+					type="text"
+					      name="inputAddress"
+					      class="form-control"
+					      id="inputAddress"
+					      placeholder="0x3A54C5...">
+				</div>
+
+				<button
+				    type="button"
+				    class="btn btn-default"
+				    onclick="App.addProposal();return false;">
+				    Confirm
+				</button>
+
+			    </form>
+			    
+
+			</div> 
+		    </div> <!-- panel success / new proposal -->
+
+		</div>  <!-- col 6 -->
+
+	    </div>  <!-- row -->
+	    
+	    <div class="row">
+
+
+		<div class="col-lg-12">	    
+
+		<div class="panel panel-info">
+		    <div class="panel-heading">
+			<div></div>
+			<h3>Payment proposals (click for details)</h3>
+		    </div>
+		    
+		    <div class="panel-body">
+			<table class="table">
+			    <thead>
+				<th scope="col">Description</th>
+				<th scope="col">Value (ETH)</th>
+				<th scope="col">Status</th>
+			    </thead>
+
+			    <tbody id="proposalsTableBody">
+			    </tbody>
+
+			</table>
+		    </div>
+		</div>  <!-- End proposals table -->
+
+		</div>  <!-- col 12 -->
+
+	    </div>  <!-- row -->
+
+	</div> <!-- container-fluid -->
+	
+    </body>
+</html>
